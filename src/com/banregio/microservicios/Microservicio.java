@@ -148,14 +148,14 @@ public class Microservicio<REQUEST_CLASS, RESPONSE_CLASS> {
 	}
 
 	public RESPONSE_CLASS request(URI uri, HttpEntity<REQUEST_CLASS> requestEntity,
-			ParameterizedTypeReference parameterizedType) {
+			ParameterizedTypeReference parameterizedType, HttpMethod httpMethod) {
 		RestTemplate restTemplate = new RestTemplate();
 		List<HttpMessageConverter<?>> messageConverters = new ArrayList<>();
 		messageConverters.add(getMessageConverter());
 
 		restTemplate.setMessageConverters(messageConverters);
 
-		ResponseEntity<RESPONSE_CLASS> response = restTemplate.exchange(uri, HttpMethod.GET, requestEntity,
+		ResponseEntity<RESPONSE_CLASS> response = restTemplate.exchange(uri, httpMethod, requestEntity,
 				parameterizedType);
 
 		System.out.println(response);
@@ -179,7 +179,7 @@ public class Microservicio<REQUEST_CLASS, RESPONSE_CLASS> {
 		ParameterizedTypeReference<DTO> parameterizedType = new ParameterizedTypeReference<DTO>() {
 		};
 
-		DTO respuesta = micro.request(uri, requestEntity, parameterizedType);
+		DTO respuesta = micro.request(uri, requestEntity, parameterizedType, HttpMethod.GET);
 
 //		ArrayList<String> params = new ArrayList<String>();
 //		params.add("clave");
