@@ -93,52 +93,13 @@ public class Microservicio<REQUEST_CLASS, RESPONSE_CLASS> {
 		return headers;
 	}
 
-	public String request(URI uri, String token) {
-
-		return "";
-	}
-
-//	public void invocacion(String claveEncriptar, String numCuenta) {
-//		String urlHost = "https://call-center-swat.brmdocp.banregio.com/";
-//		String token = "eyJhbGciOiJIUzUxMiJ9.eyJhcHAiOiJjYWxsLWNlbnRlciIsInNlYyI6ZmFsc2UsInN1YiI6ImNhbGwtY2VudGVyIiwiYXVkIjoidW5rbm93biIsImlzcyI6IkJhbnJlZ2lvIiwidGlwIjp0cnVlLCJpYXQiOjE1NzkxMDM0NDYsImp0aSI6IkxIay9OWXdsV3RIUEljQlIzMkZ6bVF0OXFrclhNMlliTko1ZVhqM3UycTZrSFFiRjkxekJpbk1lTUFDSjZ5WU8ifQ.7J9iTbIxlZork-rxBNOQ3RWCpYCawiYT7NYB_QyU6qiG_kJuMGsbF1DLl6N3iXfY4vV-3TaA_xemQMfiAV0bfA";
-//
-//		RestTemplate restTemplate = new RestTemplate();
-//		UriComponentsBuilder builder = UriComponentsBuilder
-//				.fromUriString(urlHost.concat("/ivr/nip/encriptacion".concat("?clave=")).concat(claveEncriptar)
-//						.concat("&cuenta=").concat(numCuenta));
-//
-//		HttpHeaders headers = new HttpHeaders();
-//		headers.set("Content-Type", "application/json;charset=utf-8");
-//		headers.set("Authorization", token);
-//		headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-//
-//		HttpEntity<REQUEST_CLASS> requestEntity = new HttpEntity<REQUEST_CLASS>(headers);
-//
-//		ResponseEntity<RESPONSE_CLASS> response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST,
-//				requestEntity, response_class.getClass());
-//
-//		String resultado = "";
-//
-//		ObjectMapper mapper = new ObjectMapper();
-//		JsonNode root;
-//		try {
-//			root = mapper.readTree(response.getBody());
-//
-//			JsonNode respuesta = root.path("respuesta");
-//
-//			System.out.println("json: " + response.getBody());
-//
-//			resultado = respuesta.asText() != null && !respuesta.asText().isEmpty() ? respuesta.asText() : "";
-//		} catch (JsonProcessingException e) {
-//			e.printStackTrace();
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
-//
-//		System.out.println("Resultado= " + resultado);
-//	}
-
-	public MappingJacksonHttpMessageConverter getMessageConverter() {
+	/**
+	 * Devuelve un convertidor de JSON con la propiedad de ignorar las propiedades
+	 * desconocidas
+	 * 
+	 * @return
+	 */
+	public MappingJacksonHttpMessageConverter getMessageConverterIgnoreUnknownProperties() {
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.configure(org.codehaus.jackson.map.DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 		MappingJacksonHttpMessageConverter converter = new MappingJacksonHttpMessageConverter();
@@ -147,13 +108,26 @@ public class Microservicio<REQUEST_CLASS, RESPONSE_CLASS> {
 		return converter;
 	}
 
+	/**
+	 * Realiza la petición al servicio REST
+	 * 
+	 * @param uri
+	 * @param requestEntity
+	 * @param parameterizedType
+	 * @param httpMethod
+	 * @param ignoreUnknowProperties
+	 * @return
+	 */
 	public RESPONSE_CLASS request(URI uri, HttpEntity<REQUEST_CLASS> requestEntity,
-			ParameterizedTypeReference parameterizedType, HttpMethod httpMethod) {
+			ParameterizedTypeReference parameterizedType, HttpMethod httpMethod, boolean ignoreUnknowProperties) {
 		RestTemplate restTemplate = new RestTemplate();
-		List<HttpMessageConverter<?>> messageConverters = new ArrayList<>();
-		messageConverters.add(getMessageConverter());
 
-		restTemplate.setMessageConverters(messageConverters);
+		if (ignoreUnknowProperties) {
+			List<HttpMessageConverter<?>> messageConverters = new ArrayList<>();
+			messageConverters.add(getMessageConverterIgnoreUnknownProperties());
+
+			restTemplate.setMessageConverters(messageConverters);
+		}
 
 		ResponseEntity<RESPONSE_CLASS> response = restTemplate.exchange(uri, httpMethod, requestEntity,
 				parameterizedType);
@@ -179,50 +153,7 @@ public class Microservicio<REQUEST_CLASS, RESPONSE_CLASS> {
 		ParameterizedTypeReference<DTO> parameterizedType = new ParameterizedTypeReference<DTO>() {
 		};
 
-		DTO respuesta = micro.request(uri, requestEntity, parameterizedType, HttpMethod.GET);
-
-//		ArrayList<String> params = new ArrayList<String>();
-//		params.add("clave");
-//		params.add("cuenta");
-//
-//		ArrayList<String> values = new ArrayList<String>();
-//		values.add("12345");
-//		values.add("123345");
-//
-//		URI url = micro.getURI("https://call-center-swat.brmdocp.banregio.com", "/ivr/nip/encriptacion", params,
-//				values);
-//
-//		String token = "eyJhbGciOiJIUzUxMiJ9.eyJhcHAiOiJjYWxsLWNlbnRlciIsInNlYyI6ZmFsc2UsInN1YiI6ImNhbGwtY2VudGVyIiwiYXVkIjoidW5rbm93biIsImlzcyI6IkJhbnJlZ2lvIiwidGlwIjp0cnVlLCJpYXQiOjE1NzkxMDM0NDYsImp0aSI6IkxIay9OWXdsV3RIUEljQlIzMkZ6bVF0OXFrclhNMlliTko1ZVhqM3UycTZrSFFiRjkxekJpbk1lTUFDSjZ5WU8ifQ.7J9iTbIxlZork-rxBNOQ3RWCpYCawiYT7NYB_QyU6qiG_kJuMGsbF1DLl6N3iXfY4vV-3TaA_xemQMfiAV0bfA";
-//
-//		HttpHeaders headers = micro.getHeaders(MediaType.APPLICATION_JSON.toString(),
-//				MediaType.APPLICATION_JSON.toString(), token);
-//
-//		System.out.println(url.toString());
-
-//		URI url = micro.getURI("http://localhost:8080", "test", null, null);
-//		System.out.println("uri: " + url.toString());
-//		HttpHeaders headers = micro.getHeaders(MediaType.APPLICATION_JSON.toString(),
-//				MediaType.APPLICATION_JSON.toString(), null);
-//
-//		HttpEntity<String> requestEntity = new HttpEntity<String>(headers);
-//
-//		RestTemplate restTemplate = new RestTemplate();
-//		List<HttpMessageConverter<?>> messageConverters = new ArrayList<>();
-//		messageConverters.add(micro.getMessageConverter());
-//
-//		restTemplate.setMessageConverters(messageConverters);
-//
-//		ParameterizedTypeReference<DTO> parameterizedType = new ParameterizedTypeReference<DTO>() {
-//		};
-//
-//		micro.request(parameterizedType);
-//
-//		ResponseEntity<DTO> response = restTemplate.exchange(url, HttpMethod.GET, requestEntity, DTO.class);
-//
-//		System.out.println(response);
-//
-//		DTO objeto = response.getBody();
-//		System.out.println("objeto -> " + objeto);
+		DTO respuesta = micro.request(uri, requestEntity, parameterizedType, HttpMethod.GET, true);
 	}
 
 }
