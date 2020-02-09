@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.codehaus.jackson.map.ObjectMapper;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -21,7 +22,7 @@ import com.banregio.microservicios.entity.DTO;
  * @author sethluis
  *
  */
-public class Microservicio {
+public class Microservicio<REQUEST_CLASS, RESPONSE_CLASS> {
 
 	/**
 	 * Genera una URI a partir de los datos que la componen
@@ -47,6 +48,8 @@ public class Microservicio {
 
 		UriComponentsBuilder builder = UriComponentsBuilder
 				.fromUriString(urlHost.concat("/").concat(resourceUrl).concat(paramsUrl.toString()));
+
+		System.out.println("uri: " + builder.build().toUri());
 
 		return builder.build().toUri();
 	}
@@ -144,8 +147,39 @@ public class Microservicio {
 		return converter;
 	}
 
+	public RESPONSE_CLASS request(URI uri, HttpEntity<REQUEST_CLASS> requestEntity,
+			ParameterizedTypeReference parameterizedType) {
+		RestTemplate restTemplate = new RestTemplate();
+		List<HttpMessageConverter<?>> messageConverters = new ArrayList<>();
+		messageConverters.add(getMessageConverter());
+
+		restTemplate.setMessageConverters(messageConverters);
+
+		ResponseEntity<RESPONSE_CLASS> response = restTemplate.exchange(uri, HttpMethod.GET, requestEntity,
+				parameterizedType);
+
+		System.out.println(response);
+
+		RESPONSE_CLASS objeto = response.getBody();
+		System.out.println("objeto -> " + objeto);
+
+		return objeto;
+	}
+
 	public static void main(String[] args) {
-		Microservicio micro = new Microservicio();
+		Microservicio<String, DTO> micro = new Microservicio<String, DTO>();
+
+		URI uri = micro.getURI("http://localhost:8080", "test", null, null);
+
+		HttpHeaders headers = micro.getHeaders(MediaType.APPLICATION_JSON.toString(),
+				MediaType.APPLICATION_JSON.toString(), null);
+
+		HttpEntity<String> requestEntity = new HttpEntity<String>(headers);
+
+		ParameterizedTypeReference<DTO> parameterizedType = new ParameterizedTypeReference<DTO>() {
+		};
+
+		DTO respuesta = micro.request(uri, requestEntity, parameterizedType);
 
 //		ArrayList<String> params = new ArrayList<String>();
 //		params.add("clave");
@@ -165,25 +199,30 @@ public class Microservicio {
 //
 //		System.out.println(url.toString());
 
-		URI url = micro.getURI("http://localhost:8080", "test", null, null);
-		System.out.println("uri: " + url.toString());
-		HttpHeaders headers = micro.getHeaders(MediaType.APPLICATION_JSON.toString(),
-				MediaType.APPLICATION_JSON.toString(), null);
-
-		HttpEntity<String> requestEntity = new HttpEntity<String>(headers);
-
-		RestTemplate restTemplate = new RestTemplate();
-		List<HttpMessageConverter<?>> messageConverters = new ArrayList<>();
-		messageConverters.add(micro.getMessageConverter());
-
-		restTemplate.setMessageConverters(messageConverters);
-
-		ResponseEntity<DTO> response = restTemplate.exchange(url, HttpMethod.GET, requestEntity, DTO.class);
-
-		System.out.println(response);
-
-		DTO objeto = response.getBody();
-		System.out.println("objeto -> " + objeto);
+//		URI url = micro.getURI("http://localhost:8080", "test", null, null);
+//		System.out.println("uri: " + url.toString());
+//		HttpHeaders headers = micro.getHeaders(MediaType.APPLICATION_JSON.toString(),
+//				MediaType.APPLICATION_JSON.toString(), null);
+//
+//		HttpEntity<String> requestEntity = new HttpEntity<String>(headers);
+//
+//		RestTemplate restTemplate = new RestTemplate();
+//		List<HttpMessageConverter<?>> messageConverters = new ArrayList<>();
+//		messageConverters.add(micro.getMessageConverter());
+//
+//		restTemplate.setMessageConverters(messageConverters);
+//
+//		ParameterizedTypeReference<DTO> parameterizedType = new ParameterizedTypeReference<DTO>() {
+//		};
+//
+//		micro.request(parameterizedType);
+//
+//		ResponseEntity<DTO> response = restTemplate.exchange(url, HttpMethod.GET, requestEntity, DTO.class);
+//
+//		System.out.println(response);
+//
+//		DTO objeto = response.getBody();
+//		System.out.println("objeto -> " + objeto);
 	}
 
 }
