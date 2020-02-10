@@ -19,6 +19,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.banregio.microservicios.entity.DTO;
 
 /**
+ * Clase con métodos de utilería para invocar servicios REST usando RestTemplate
+ * 
  * @author sethluis
  *
  */
@@ -36,7 +38,7 @@ public class Microservicio<REQUEST_CLASS, RESPONSE_CLASS> {
 	 *                    [123], [123]
 	 * @return
 	 */
-	public URI getURI(String urlHost, String resourceUrl, List<String> params, List<String> values) {
+	public URI buildURI(String urlHost, String resourceUrl, List<String> params, List<String> values) {
 		StringBuilder paramsUrl = new StringBuilder("");
 
 		if (params != null && !params.isEmpty()) {
@@ -48,8 +50,6 @@ public class Microservicio<REQUEST_CLASS, RESPONSE_CLASS> {
 
 		UriComponentsBuilder builder = UriComponentsBuilder
 				.fromUriString(urlHost.concat("/").concat(resourceUrl).concat(paramsUrl.toString()));
-
-		System.out.println("uri: " + builder.build().toUri());
 
 		return builder.build().toUri();
 	}
@@ -85,7 +85,7 @@ public class Microservicio<REQUEST_CLASS, RESPONSE_CLASS> {
 	 * 
 	 * @return
 	 */
-	public HttpHeaders getSimpletHeader() {
+	public HttpHeaders getSimpletHeaders() {
 		HttpHeaders headers = new HttpHeaders();
 		headers.set("Accept", MediaType.APPLICATION_JSON.toString());
 		headers.set("Content-Type", MediaType.APPLICATION_JSON.toString());
@@ -99,7 +99,7 @@ public class Microservicio<REQUEST_CLASS, RESPONSE_CLASS> {
 	 * 
 	 * @return
 	 */
-	public MappingJacksonHttpMessageConverter getMessageConverterIgnoreUnknownProperties() {
+	private MappingJacksonHttpMessageConverter getMessageConverterIgnoreUnknownProperties() {
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.configure(org.codehaus.jackson.map.DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 		MappingJacksonHttpMessageConverter converter = new MappingJacksonHttpMessageConverter();
@@ -108,18 +108,25 @@ public class Microservicio<REQUEST_CLASS, RESPONSE_CLASS> {
 		return converter;
 	}
 
+	private ParameterizedTypeReference<RESPONSE_CLASS> getParameterizedResponseClass() {
+		ParameterizedTypeReference<RESPONSE_CLASS> parameterizedType = new ParameterizedTypeReference<RESPONSE_CLASS>() {
+		};
+
+		return parameterizedType;
+	}
+
 	/**
-	 * Realiza la petición al servicio REST
+	 * 
 	 * 
 	 * @param uri
 	 * @param requestEntity
-	 * @param parameterizedType
 	 * @param httpMethod
 	 * @param ignoreUnknowProperties
+	 * @param parameterizedResponseType
 	 * @return
 	 */
-	public RESPONSE_CLASS request(URI uri, HttpEntity<REQUEST_CLASS> requestEntity,
-			ParameterizedTypeReference parameterizedType, HttpMethod httpMethod, boolean ignoreUnknowProperties) {
+	public RESPONSE_CLASS request(URI uri, HttpEntity<REQUEST_CLASS> requestEntity, HttpMethod httpMethod,
+			ParameterizedTypeReference parameterizedType, boolean ignoreUnknowProperties) {
 		RestTemplate restTemplate = new RestTemplate();
 
 		if (ignoreUnknowProperties) {
@@ -132,28 +139,7 @@ public class Microservicio<REQUEST_CLASS, RESPONSE_CLASS> {
 		ResponseEntity<RESPONSE_CLASS> response = restTemplate.exchange(uri, httpMethod, requestEntity,
 				parameterizedType);
 
-		System.out.println(response);
-
-		RESPONSE_CLASS objeto = response.getBody();
-		System.out.println("objeto -> " + objeto);
-
-		return objeto;
-	}
-
-	public static void main(String[] args) {
-		Microservicio<String, DTO> micro = new Microservicio<String, DTO>();
-
-		URI uri = micro.getURI("http://localhost:8080", "test", null, null);
-
-		HttpHeaders headers = micro.getHeaders(MediaType.APPLICATION_JSON.toString(),
-				MediaType.APPLICATION_JSON.toString(), null);
-
-		HttpEntity<String> requestEntity = new HttpEntity<String>(headers);
-
-		ParameterizedTypeReference<DTO> parameterizedType = new ParameterizedTypeReference<DTO>() {
-		};
-
-		DTO respuesta = micro.request(uri, requestEntity, parameterizedType, HttpMethod.GET, true);
+		return response.getBody();
 	}
 
 }
